@@ -1,7 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="blq.ssnb.blutoothblefragment" >
-
-    <application>
-        <service android:name=".BluetoothService" />
-    </application>
-</manifest>

@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="blq.ssnb.bleframe" >
+
+    <application>
+        <service android:name="blq.ssnb.bleframe.BluetoothService" />
+    </application>
+</manifest>

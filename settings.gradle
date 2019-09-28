@@ -1,2 +1,1 @@
-include ':app', ':blutoothblefragment'
-rootProject.name='BlutoothbBLEFrame'
+include ':app', ':bleframe'
