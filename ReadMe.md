@@ -1,5 +1,5 @@
 
-# BlutoothBLEFrame [![](https://jitpack.io/v/Bgtal/BlutoothBLEFrame.svg)](https://jitpack.io/#Bgtal/BlutoothBLEFrame)
+# BlutoothBLEFrame [![](https://jitpack.io/v/Bgtal/BLEFrame.svg)](https://jitpack.io/#Bgtal/BLEFrame)
 > maven
 ```  
 allprojects {
@@ -11,7 +11,7 @@ allprojects {
 }
 ```
 
-> implementation 'com.github.Bgtal:BlutoothBLEFrame:1.0.0'
+> implementation 'com.github.Bgtal:BLEFrame:1.0.1'
 
 ## 项目依赖
 * 使用的时候需要在自己的项目中引用下面的包，不然会报错
