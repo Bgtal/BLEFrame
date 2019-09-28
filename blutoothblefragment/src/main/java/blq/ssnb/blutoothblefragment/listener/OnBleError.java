@@ -12,7 +12,6 @@ package blq.ssnb.blutoothblefragment.listener;
  * ================================================
  * </pre>
  */
-public interface BleActionCallBack {
-
-    void onActionResult();
+public interface OnBleError {
+    void onError(int errorCode, String errorMsg);
 }

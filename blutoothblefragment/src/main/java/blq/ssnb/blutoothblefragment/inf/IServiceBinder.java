@@ -25,7 +25,7 @@ public interface IServiceBinder {
      * @param address 设备地址
      * @param deviceRuler 设备的相关规则
      */
-    void connectDevice(Context context, String address, IBleDeviceRuler deviceRuler);
+    boolean connectDevice(Context context, String address, IBleDeviceRuler deviceRuler);
 
     /**
      * 断开连接设备

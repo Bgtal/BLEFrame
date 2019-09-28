@@ -278,7 +278,7 @@ public class SnbBluetoothManager {
     private ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            SnbLog.si(Constant.LOG_TAG,getLogStr("蓝牙扫描:单个回调"));
+            SnbLog.si(Constant.LOG_TAG, getLogStr("蓝牙扫描:单个回调"));
             for (OnBLEScanCallBack callBack : mBLEScanCallBacks) {
                 if (callBack != null) {
                     callBack.onScanResult(result);
@@ -289,7 +289,7 @@ public class SnbBluetoothManager {
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             super.onBatchScanResults(results);
-            SnbLog.si(Constant.LOG_TAG,getLogStr("蓝牙扫描:多个回调"));
+            SnbLog.si(Constant.LOG_TAG, getLogStr("蓝牙扫描:多个回调"));
             for (ScanResult result : results) {
                 for (OnBLEScanCallBack callBack : mBLEScanCallBacks) {
                     if (callBack != null) {
@@ -302,7 +302,7 @@ public class SnbBluetoothManager {
         @Override
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
-            SnbLog.si(Constant.LOG_TAG,getLogStr("蓝牙扫描:失败="+errorCode));
+            SnbLog.si(Constant.LOG_TAG, getLogStr("蓝牙扫描:失败=" + errorCode));
             for (OnBLEScanCallBack callBack : mBLEScanCallBacks) {
                 if (callBack != null) {
                     callBack.onScanFail(errorCode);
@@ -328,7 +328,12 @@ public class SnbBluetoothManager {
             @Override
             protected void onFinish() {
                 //时间到了调用停止扫描
-                SnbLog.si(Constant.LOG_TAG,getLogStr("倒计时结束扫描"));
+                SnbLog.si(Constant.LOG_TAG, getLogStr("倒计时结束扫描"));
+                for (OnBLEScanCallBack callBack : mBLEScanCallBacks) {
+                    if (callBack != null) {
+                        callBack.onScanTimeOut();
+                    }
+                }
                 stopScanLE();
             }
         };
@@ -396,11 +401,13 @@ public class SnbBluetoothManager {
         void onScanResult(ScanResult result);
 
         void onScanFail(int errorCode);
+
+        void onScanTimeOut();
     }
     // </editor-fold>
 
-    private String getLogStr(String msg){
-        return "蓝牙Manager:"+msg;
+    private String getLogStr(String msg) {
+        return "蓝牙Manager:" + msg;
     }
 }
 

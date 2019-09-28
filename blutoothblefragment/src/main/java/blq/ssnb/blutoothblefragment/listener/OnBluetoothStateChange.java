@@ -12,6 +12,24 @@ package blq.ssnb.blutoothblefragment.listener;
  * ================================================
  * </pre>
  */
-public interface BlutoothStateCallback {
+public interface OnBluetoothStateChange extends OnBleError{
+    /**
+     * 正在打开
+     */
+    void onTurningOn();
 
+    /**
+     * 已经打开
+     */
+    void onOn();
+
+    /**
+     * 正在关闭
+     */
+    void onTurningOff();
+
+    /**
+     * 已经关闭
+     */
+    void onOff();
 }

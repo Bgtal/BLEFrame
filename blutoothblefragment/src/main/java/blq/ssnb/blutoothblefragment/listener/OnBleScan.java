@@ -2,8 +2,6 @@ package blq.ssnb.blutoothblefragment.listener;
 
 import android.bluetooth.BluetoothDevice;
 
-import blq.ssnb.blutoothblefragment.listener.BleErrorCallBack;
-
 /**
  * <pre>
  * ================================================
@@ -12,10 +10,11 @@ import blq.ssnb.blutoothblefragment.listener.BleErrorCallBack;
  * 邮箱: blq_ssnb@outlook.com
  * 修改次数: 1
  * 描述:
- *      添加描述
+ *      蓝牙扫描返回对象
  * ================================================
  * </pre>
  */
-public interface BleScanCallBack extends BleErrorCallBack {
+public interface OnBleScan extends OnBleError {
     void onScanResult(BluetoothDevice device);
+    void onScanTimeOut();
 }
