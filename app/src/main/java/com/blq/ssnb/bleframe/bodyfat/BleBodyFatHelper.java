@@ -5,7 +5,7 @@ import android.widget.TextView;
 
 import java.util.Calendar;
 
-import blq.ssnb.bleframe.AbsBleDeviceHelper;
+import blq.ssnb.bleframe.helper.BaseBleDeviceHelper;
 import blq.ssnb.bleframe.inf.IBleDeviceRuler;
 import blq.ssnb.snbutil.SnbLog;
 import blq.ssnb.snbutil.SnbTimeUtil;
@@ -22,7 +22,7 @@ import blq.ssnb.snbutil.SnbTimeUtil;
  * ================================================
  * </pre>
  */
-public class BleBodyFatHelper extends AbsBleDeviceHelper {
+public class BleBodyFatHelper extends BaseBleDeviceHelper {
 
     private String logTag = ">>>蓝牙BLE-help-sub";
 

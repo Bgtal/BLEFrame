@@ -1,12 +1,7 @@
-package blq.ssnb.bleframe;
+package blq.ssnb.bleframe.listener;
 
 import android.bluetooth.BluetoothDevice;
 
-import blq.ssnb.bleframe.listener.OnCommandCallBack;
-import blq.ssnb.bleframe.listener.OnBleError;
-import blq.ssnb.bleframe.listener.OnBleScan;
-import blq.ssnb.bleframe.listener.OnBluetoothStateChange;
-import blq.ssnb.bleframe.listener.OnGattStateChange;
 import blq.ssnb.bleframe.Constant.ErrorInfo;
 
 /**
@@ -23,6 +18,7 @@ import blq.ssnb.bleframe.Constant.ErrorInfo;
  */
 public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, OnGattStateChange, OnCommandCallBack {
 
+    /**{@link OnBleScan}*/
     private OnBleScan mOnBleScan;
 
     public void setOnBleScan(OnBleScan onBleScan) {
@@ -43,6 +39,7 @@ public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, O
         }
     }
 
+    /**{@link OnBluetoothStateChange}*/
     private OnBluetoothStateChange mOnBluetoothStateChange;
 
     public void setOnBluetoothStateChange(OnBluetoothStateChange onBluetoothStateChange) {
@@ -77,6 +74,7 @@ public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, O
         }
     }
 
+    /**{@link OnGattStateChange}*/
     private OnGattStateChange mOnGattStateChange;
 
     public void setOnGattStateChange(OnGattStateChange onGattStateChange) {
@@ -111,6 +109,7 @@ public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, O
         }
     }
 
+    /**{@link OnBleError}*/
     private OnBleError mOnBleError;
 
     public void setOnBleError(OnBleError onBleError) {
@@ -125,8 +124,12 @@ public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, O
         } else if (errorCode == ErrorInfo.BLUETOOTH_STATE_UN_KNOW.getCode()) {
             error = mOnBluetoothStateChange;
         } else if (errorCode == ErrorInfo.BLE_GATT_STATE_UN_KNOW.getCode()
-                || errorCode == ErrorInfo.BLE_GATT_STATE_CHANGE_FAIL.getCode()) {
+                || errorCode == ErrorInfo.BLE_GATT_STATE_CHANGE_FAIL.getCode()
+                || errorCode == ErrorInfo.BLE_CONNECT_ADDRESS_IS_NULL.getCode()) {
             error = mOnGattStateChange;
+        } else if (errorCode == ErrorInfo.COMMAND_FAIL.getCode()
+                || errorCode == ErrorInfo.READ_RSSI_FAIL.getCode()) {
+            error = mOnCommandCallBack;
         } else {
             error = mOnBleError;
         }
@@ -136,6 +139,7 @@ public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, O
         }
     }
 
+    /**{@link OnCommandCallBack}*/
     private OnCommandCallBack mOnCommandCallBack;
 
     public void setOnCommandCallBack(OnCommandCallBack onCommandCallBack) {
@@ -158,7 +162,7 @@ public class HelperListenerProxy implements OnBleScan, OnBluetoothStateChange, O
 
     @Override
     public void onCommandResult(byte[] data) {
-        if(mOnCommandCallBack != null){
+        if (mOnCommandCallBack != null) {
             mOnCommandCallBack.onCommandResult(data);
         }
     }

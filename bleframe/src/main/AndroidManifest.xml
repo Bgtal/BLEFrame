@@ -1,7 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="blq.ssnb.bleframe" >
 
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
     <application>
-        <service android:name="blq.ssnb.bleframe.BluetoothService" />
+        <service android:name=".service.BaseBleService" />
     </application>
 </manifest>

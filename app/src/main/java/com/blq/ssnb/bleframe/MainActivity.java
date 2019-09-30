@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.blq.ssnb.bleframe.bodyfat.BleBodyFatHelper;
 import com.blq.ssnb.bleframe.toothbrush.BleToothBrushHelper;
 import com.blq.ssnb.bleframe.toothbrush.ToothBrushCmdUtil;
+import com.blq.ssnb.bleframe.toothbrush.ToothbrushCommandCallBack;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -25,8 +26,8 @@ import java.util.List;
 import blq.ssnb.bleframe.listener.OnBleError;
 import blq.ssnb.bleframe.listener.OnBleScan;
 import blq.ssnb.bleframe.listener.OnBluetoothStateChange;
-import blq.ssnb.bleframe.listener.OnCommandCallBack;
 import blq.ssnb.bleframe.listener.OnGattStateChange;
+import blq.ssnb.snbutil.SnbTimeUtil;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setLayoutManager(new GridLayoutManager(this, 5));
         mActionAdapter = new ActionAdapter();
         mRecyclerView.setAdapter(mActionAdapter);
-        mToothBrushHelper.setTextView(showView);
 
         check();
         updateAction(true);
@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         mToothBrushHelper.setOnGattStateChange(new OnGattStateChange() {
             @Override
             public void onError(int errorCode, String errorMsg) {
-                showView.append("ble 蓝牙连接出错," + errorCode + ":" + errorMsg+"\n");
+                showView.append("ble 蓝牙连接出错," + errorCode + ":" + errorMsg + "\n");
             }
 
             @Override
@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         mToothBrushHelper.setOnBluetoothStateChange(new OnBluetoothStateChange() {
             @Override
             public void onError(int errorCode, String errorMsg) {
-                showView.append("蓝牙连接出错," + errorCode + ":" + errorMsg+"\n");
+                showView.append("蓝牙连接出错," + errorCode + ":" + errorMsg + "\n");
             }
 
             @Override
@@ -134,32 +134,109 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mToothBrushHelper.setOnCommandCallBack(new OnCommandCallBack() {
+        mToothBrushHelper.setOnCommandCallBack(new ToothbrushCommandCallBack() {
+            @Override
+            public void onError(int errorCode, String errorMsg) {
+                showView.append("通信出错," + errorCode + ":" + errorMsg + "\n");
+
+            }
+
             @Override
             public void onGattRSSIResult(int rssi) {
+                showView.append("获取设备强度:" + rssi + "\n");
 
             }
 
             @Override
             public void onSetMTUResult(int newSize) {
+                showView.append("设置传入大小"+newSize+"\n");
 
             }
 
             @Override
             public void onCommandResult(byte[] data) {
+                showView.append("数据解析回调:" + (data != null ? data.length : "空数据"));
 
             }
 
             @Override
-            public void onError(int errorCode, String errorMsg) {
-                showView.append("通信出错," + errorCode + ":" + errorMsg+"\n");
+            public void onSetDeviceTimeResult(boolean isSuccess) {
+                showView.append("设置设备时间:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onGetDeviceTimeResult(boolean isSuccess, Calendar calendar) {
+                showView.append("设置设备时间:"+isSuccess+"\n"+ SnbTimeUtil.date2String("yyyy-MM-dd HH:mm:ss",calendar.getTime())+"\n");
+            }
+
+            @Override
+            public void onSetBrushingTimeResult(boolean isSuccess) {
+                showView.append("设置刷牙时间:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onGetBrushingTimeResult(boolean isSuccess, int time1, int time2, int time3, int time4) {
+                showView.append("获取刷牙时间:"+isSuccess+"\n"+";1:"+time1+";2:"+time2+";3:"+time3+";4:"+time4);
+            }
+
+            @Override
+            public void onGetVersionResult(boolean isSuccess, String version) {
+                showView.append("获取版本:"+isSuccess+";version:"+version+"\n");
+
+            }
+
+            @Override
+            public void onMCUResetResult(boolean isSuccess) {
+                showView.append("设置MCU:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onOTAResult(boolean isSuccess) {
+                showView.append("OTA回调:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onFactoryResetResult(boolean isSuccess) {
+                showView.append("恢复出厂设置:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onGetBatteryPercentResult(boolean isSuccess, int batteryPercent) {
+                showView.append("获取电池电量:"+isSuccess+";电量:+"+batteryPercent+"\n");
+            }
+
+            @Override
+            public void onBrushingGuidingResult(boolean isSuccess) {
+                showView.append("开始刷牙指导:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onGetToothBrushStatusResult(boolean isSuccess, int status) {
+                showView.append("获取牙刷状态:"+isSuccess+";status:"+status+"\n");
+            }
+
+            @Override
+            public void onAddHistoryResult(boolean isSuccess) {
+                showView.append("添加刷牙数据:"+isSuccess+"\n");
+            }
+
+            @Override
+            public void onBrushResult(int area, boolean isNeedToMove, boolean isCorrect) {
+                showView.append("刷牙数据返回:区域:"+area+";是否需要移动:"+isNeedToMove+";方向是否正确"+isCorrect+"\n");
+
+            }
+
+            @Override
+            public void onGetBrushHistoryResult(String msg) {
+                showView.append("获取历史记录回调:" + msg + "\n");
+
             }
         });
 
         mToothBrushHelper.setOnBleError(new OnBleError() {
             @Override
             public void onError(int errorCode, String errorMsg) {
-                showView.append("出错啦啦啦啦：" + errorCode + ":" + errorMsg+"\n");
+                showView.append("出错啦啦啦啦：" + errorCode + ":" + errorMsg + "\n");
             }
         });
 
@@ -241,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        mToothBrushHelper.onDestory();
+        mToothBrushHelper.onDestroy();
         super.onDestroy();
     }
 

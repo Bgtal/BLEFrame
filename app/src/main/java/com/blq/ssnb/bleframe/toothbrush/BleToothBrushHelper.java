@@ -5,8 +5,9 @@ import android.widget.TextView;
 
 import java.util.Calendar;
 
-import blq.ssnb.bleframe.AbsBleDeviceHelper;
+import blq.ssnb.bleframe.helper.BaseBleDeviceHelper;
 import blq.ssnb.bleframe.inf.IBleDeviceRuler;
+import blq.ssnb.bleframe.listener.OnCommandCallBack;
 import blq.ssnb.snbutil.SnbLog;
 import blq.ssnb.snbutil.SnbTimeUtil;
 
@@ -22,7 +23,7 @@ import blq.ssnb.snbutil.SnbTimeUtil;
  * ================================================
  * </pre>
  */
-public class BleToothBrushHelper extends AbsBleDeviceHelper{
+public class BleToothBrushHelper extends BaseBleDeviceHelper {
 
     private String logTag = ">>>蓝牙BLE-help-sub";
 
@@ -35,13 +36,18 @@ public class BleToothBrushHelper extends AbsBleDeviceHelper{
         return new BleToothBrushRule();
     }
 
+    private ToothbrushCommandCallBack mToothbrushCommandCallBack;
+
     @Override
-    protected void onGattCommandParsing(byte[] datas) {
-        dataAvailableResul(datas);
+    public void setOnCommandCallBack(OnCommandCallBack commandCallBack) {
+        super.setOnCommandCallBack(commandCallBack);
+        if (commandCallBack instanceof ToothbrushCommandCallBack) {
+            mToothbrushCommandCallBack = (ToothbrushCommandCallBack) commandCallBack;
+        }
     }
 
-    private void dataAvailableResul(final byte[] command) {
-
+    @Override
+    protected void onGattCommandParsing(byte[] command) {
         byte action = command[0];
 
         if (action == ToothBrushCmdUtil.CommandAction.SET_DEVICE_TIME.getAction()) {
@@ -98,11 +104,14 @@ public class BleToothBrushHelper extends AbsBleDeviceHelper{
             c.set(year, month, day, hours, minutes, seconds);
 
             final int totalTime = (command[8] & 0xFF) + ((command[9] << 8) & 0xFF00);
+            String log ="";
             if (command.length == 16) {
-                SnbLog.e(logTag, "获取刷牙历史数据:结束");
-                return;
+                log = "获取刷牙历史数据:结束";
+            }else{
+                log = "获取刷牙历史数据:" + "id:" + id + ";时间:" + SnbTimeUtil.date2String("yyyy-MM-dd HH:mm:ss", c.getTime()) + ";time:" + totalTime;
             }
-            SnbLog.e(logTag, "获取刷牙历史数据:" + "id:" + id + ";时间:" + SnbTimeUtil.date2String("yyyy-MM-dd mm:HH:ss", c.getTime()) + ";time:" + totalTime);
+
+            SnbLog.e(logTag, log);
 
 //            if (getHistoryBrushingDataCallback != null) {
 //                handler.post(new Runnable() {
@@ -119,10 +128,13 @@ public class BleToothBrushHelper extends AbsBleDeviceHelper{
 //                    }
 //                });
 //            }
-
-
+            if (mToothbrushCommandCallBack != null) {
+                mToothbrushCommandCallBack.onGetBrushHistoryResult(log);
+            }
         } else if (action == ToothBrushCmdUtil.CommandAction.GET_HISTORY_BRUSHING_DATA.getFailAction()) {
-
+            if (mToothbrushCommandCallBack != null) {
+                mToothbrushCommandCallBack.onGetBrushHistoryResult("获取历史记录失败了");
+            }
         } else if (action == ToothBrushCmdUtil.CommandAction.GET_VERSION.getAction()) {
             final String version = (char) command[1] + "." + (char) command[2] + "."
                     + (char) command[3] + "." + (char) command[3];
@@ -170,57 +182,85 @@ public class BleToothBrushHelper extends AbsBleDeviceHelper{
     }
 
     protected void brushingGuidingResult(boolean isSuccess) {
-        setText("刷牙指导返回:"+isSuccess);
+        setText("刷牙指导返回:" + isSuccess);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onBrushingGuidingResult(isSuccess);
+        }
     }
 
     protected void onBrushResult(int area, boolean isNeedToMove, boolean isCorrect) {
         SnbLog.e(logTag, "刷牙数据返回:区域:" + area + ";是否需要移动:" + isNeedToMove + ";角度是否对:" + isCorrect);
         setText("刷牙数据返回:区域:" + area + ";是否需要移动:" + isNeedToMove + ";角度是否对:" + isCorrect);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onBrushResult(area, isNeedToMove, isCorrect);
+        }
     }
 
     protected void addHistoryResult(boolean isSuccess) {
         SnbLog.e(logTag, "设置历史数据:" + isSuccess);
         setText("设置历史数据:" + isSuccess);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onAddHistoryResult(isSuccess);
+        }
     }
 
     protected void getToothBrushStatusResult(boolean isSuccess, int status) {
         SnbLog.e(logTag, "获取牙刷状态返回:" + isSuccess + "；状态:" + status);
         setText("获取牙刷状态返回:" + isSuccess + "；状态:" + status);
-
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onGetToothBrushStatusResult(isSuccess, status);
+        }
     }
 
     protected void getBatteryPercentResult(boolean isSuccess, int batteryPercent) {
         SnbLog.e(logTag, "获取电量返回:" + isSuccess + "；电量:" + batteryPercent);
         setText("获取电量返回:" + isSuccess + "；电量:" + batteryPercent);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onGetBatteryPercentResult(isSuccess, batteryPercent);
+        }
     }
 
     protected void factoryResetResult(boolean isSuccess) {
-
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onFactoryResetResult(isSuccess);
+        }
     }
 
     protected void otaResult(boolean isSuccess) {
-
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onOTAResult(isSuccess);
+        }
     }
 
     protected void mcuResetResult(boolean isSuccess) {
-
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onMCUResetResult(isSuccess);
+        }
     }
 
     protected void getVersionResult(boolean isSuccess, String version) {
         SnbLog.e(logTag, "获取版本返回:" + isSuccess + "；version:" + version);
         setText("获取版本返回:" + isSuccess + "；version:" + version);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onGetVersionResult(isSuccess, version);
+        }
 
     }
 
     protected void getBrushingTimeResult(boolean isSuccess, int time1, int time2, int time3, int time4) {
         SnbLog.e(logTag, "获得刷牙时间返回:" + isSuccess + " time1:" + time1 + ";time2:" + time2 + ";time3:" + time3 + ";time4:" + time4);
-        setText( "获得刷牙时间返回:" + isSuccess + " time1:" + time1 + ";time2:" + time2 + ";time3:" + time3 + ";time4:" + time4);
-
+        setText("获得刷牙时间返回:" + isSuccess + " time1:" + time1 + ";time2:" + time2 + ";time3:" + time3 + ";time4:" + time4);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onGetBrushingTimeResult(isSuccess, time1, time2, time3, time4);
+        }
     }
 
     protected void setDeviceTimeResult(boolean isSuccess) {
         SnbLog.e(logTag, "设置蓝牙时间返回:" + isSuccess);
-        setText( "设置蓝牙时间返回:" + isSuccess);
+        setText("设置蓝牙时间返回:" + isSuccess);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onSetDeviceTimeResult(isSuccess);
+        }
 
     }
 
@@ -231,29 +271,21 @@ public class BleToothBrushHelper extends AbsBleDeviceHelper{
         }
         SnbLog.e(logTag, "获取蓝牙时间返回:" + isSuccess + " : " + timeStr);
         setText("获取蓝牙时间返回:" + isSuccess + " : " + timeStr);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onGetDeviceTimeResult(isSuccess, time);
+        }
     }
 
     protected void setBrushingTimeResult(boolean isSuccess) {
         SnbLog.e(logTag, "设置蓝牙时间返回:" + isSuccess);
-        setText( "设置蓝牙时间返回:" + isSuccess);
+        setText("设置蓝牙时间返回:" + isSuccess);
+        if (mToothbrushCommandCallBack != null) {
+            mToothbrushCommandCallBack.onSetBrushingTimeResult(isSuccess);
+        }
     }
 
-    private TextView mTextView;
-
-    /**
-     * 当然这里不应该这么传，应该以callback
-     * 的方式回调到外面让外面进行相关业务逻辑的操作
-     * 我这里纯是为了图方便
-     * @param tv
-     */
-    public void setTextView(TextView tv) {
-        this.mTextView = tv;
-    }
 
     private void setText(String msg) {
-        if (mTextView != null) {
-            mTextView.append(msg + "\n");
-        }
     }
 
 }

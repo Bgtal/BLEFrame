@@ -1,4 +1,4 @@
-package blq.ssnb.bleframe;
+package blq.ssnb.bleframe.helper;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
+import blq.ssnb.bleframe.listener.HelperListenerProxy;
+import blq.ssnb.bleframe.SendBroadcastUtil;
 import blq.ssnb.snbutil.SnbLog;
 
 import static blq.ssnb.bleframe.Constant.LOG_TAG;
@@ -29,10 +31,10 @@ import blq.ssnb.bleframe.Constant.*;
  */
 public class BleReceiver extends BroadcastReceiver {
 
-    protected AbsBleDeviceHelper mDeviceHelper;
+    protected BaseBleDeviceHelper mDeviceHelper;
     protected HelperListenerProxy mProxy;
 
-    public BleReceiver(AbsBleDeviceHelper deviceHelper) {
+    public BleReceiver(BaseBleDeviceHelper deviceHelper) {
         if (deviceHelper == null) {
             throw new IllegalArgumentException("广播需要传入Helper");
         }
@@ -134,7 +136,7 @@ public class BleReceiver extends BroadcastReceiver {
                     mProxy.onOff();
                     break;
                 default:
-                    mDeviceHelper.sendError(ErrorInfo.BLUETOOTH_STATE_UN_KNOW);
+                    sendError(ErrorInfo.BLUETOOTH_STATE_UN_KNOW);
             }
         }
     }
@@ -169,13 +171,13 @@ public class BleReceiver extends BroadcastReceiver {
                             mProxy.onDisconnected(address);
                             break;
                         default:
-                            mDeviceHelper.sendError(ErrorInfo.BLE_GATT_STATE_UN_KNOW);
+                            sendError(ErrorInfo.BLE_GATT_STATE_UN_KNOW);
                     }
                 }
             } else {
                 if (mDeviceHelper.isCurrentConnecting(address)) {
                     //如果是临时地址的话，可能连接失败或者断开失败，一般断开失败不用管
-                    mDeviceHelper.sendError(ErrorInfo.BLE_GATT_STATE_CHANGE_FAIL);
+                    sendError(ErrorInfo.BLE_GATT_STATE_CHANGE_FAIL);
                 }
             }
         }
@@ -195,7 +197,7 @@ public class BleReceiver extends BroadcastReceiver {
             if (isSuccess) {
                 mProxy.onCommandResult(datas);
             } else {
-                mDeviceHelper.sendError(ErrorInfo.COMMAND_FAIL);
+                sendError(ErrorInfo.COMMAND_FAIL);
             }
         }
     }
@@ -215,7 +217,7 @@ public class BleReceiver extends BroadcastReceiver {
                     mProxy.onGattRSSIResult(rssi);
                 }
             } else {
-                mDeviceHelper.sendError(ErrorInfo.READ_RSSI_FAIL);
+                sendError(ErrorInfo.READ_RSSI_FAIL);
             }
         }
     }
@@ -231,7 +233,7 @@ public class BleReceiver extends BroadcastReceiver {
                     mProxy.onSetMTUResult(size);
                 }
             } else {
-                mDeviceHelper.sendError(ErrorInfo.READ_RSSI_FAIL);
+                sendError(ErrorInfo.READ_RSSI_FAIL);
             }
         }
     }
@@ -251,6 +253,10 @@ public class BleReceiver extends BroadcastReceiver {
      */
     protected void onReceiveOther(Context context, String action, Intent intent) {
         SnbLog.se(LOG_TAG, getLogStr("监听到其他回调:" + action));
+    }
+
+    protected final void sendError(ErrorInfo info) {
+        mProxy.onError(info.getCode(), info.getMsg());
     }
 
 

@@ -1,6 +1,7 @@
-package blq.ssnb.bleframe;
+package blq.ssnb.bleframe.helper;
 
 import android.app.Activity;
+import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
 import android.content.ComponentName;
@@ -11,6 +12,8 @@ import android.os.IBinder;
 
 import java.lang.ref.WeakReference;
 
+import blq.ssnb.bleframe.listener.HelperListenerProxy;
+import blq.ssnb.bleframe.SnbBluetoothManager;
 import blq.ssnb.bleframe.inf.IBleDeviceRuler;
 import blq.ssnb.bleframe.inf.IServiceBinder;
 import blq.ssnb.bleframe.listener.OnBleError;
@@ -18,28 +21,37 @@ import blq.ssnb.bleframe.listener.OnBleScan;
 import blq.ssnb.bleframe.listener.OnBluetoothStateChange;
 import blq.ssnb.bleframe.listener.OnCommandCallBack;
 import blq.ssnb.bleframe.listener.OnGattStateChange;
+import blq.ssnb.bleframe.service.BaseBleService;
 import blq.ssnb.snbutil.SnbLog;
 
-import static blq.ssnb.bleframe.Constant.ErrorInfo;
 import static blq.ssnb.bleframe.Constant.LOG_TAG;
-
+import static blq.ssnb.bleframe.Constant.ErrorInfo;
 
 /**
  * <pre>
  * ================================================
  * 作者: BLQ_SSNB
- * 日期：2019-09-26
+ * 日期：2019-09-29
  * 邮箱: blq_ssnb@outlook.com
  * 修改次数: 1
  * 描述:
- *      具体的设备的操作帮助类
+ *  使用蓝牙BLE 必须 申请如下权限
+ * 权限
+ * <uses-permission android:name="android.permission.BLUETOOTH" />
+ * <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+ *
+ * android 6.0 以上需要定位权限才能使用蓝牙 ble 功能(动态申请)
+ *
+ * <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+ * <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
  * ================================================
  * </pre>
  */
-public abstract class AbsBleDeviceHelper {
+public abstract class BaseBleDeviceHelper {
 
-    // <editor-fold defaultstate="collapsed" desc="蓝牙管理器相关">
-    private WeakReference<Activity> mActivityWeakReference;
+
+    protected WeakReference<Activity> mActivityWeakReference;
+
     private SnbBluetoothManager mBluetoothManager;
     private SnbBluetoothManager.OnBLEScanCallBack mOnBLEScanCallBack;
 
@@ -48,19 +60,52 @@ public abstract class AbsBleDeviceHelper {
     public HelperListenerProxy getHelperListenerProxy() {
         return mHelperListenerProxy;
     }
-    // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="和蓝牙服务相关">
     private ServiceConnection mServiceConnection;
     private IServiceBinder mBinder;
     private IBleDeviceRuler mDeviceRuler;
     private BleReceiver mBleReceiver;
-
-//    private OnBluetoothStateChange mBluetoothStateChange;
     // </editor-fold>
 
-    public AbsBleDeviceHelper(Activity activity) {
+    public BaseBleDeviceHelper(Activity activity) {
         mActivityWeakReference = new WeakReference<>(activity);
+        mBluetoothManager = SnbBluetoothManager.singleton();
+        initHelperListenerProxy();
+        initBLEScanCallBack();
+        initServiceConnection();
+        mBleReceiver = initBleReceiver();
+
+    }
+    // <editor-fold defaultstate="collapsed" desc="初始化一些监听">
+
+    private void initServiceConnection() {
+        mServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                if (service instanceof IServiceBinder) {
+                    mBinder = (IServiceBinder) service;
+                    SnbLog.se(LOG_TAG, getLogStr("服务连接：" + name));
+                } else {
+                    SnbLog.se(LOG_TAG, getLogStr("服务连接-但是不是IServiceBinder对象" + name));
+                }
+                onBleServiceConnected(name, service);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                SnbLog.se(LOG_TAG, getLogStr("服务断开" + name));
+                //断开服务的时候需要将连接断开并且置空
+                if (mBinder != null) {
+                    disConnectionDevice();
+                    mBinder = null;
+                }
+                onBleServiceDisconnected(name);
+            }
+        };
+    }
+
+    private void initHelperListenerProxy() {
         mHelperListenerProxy = new HelperListenerProxy() {
             @Override
             public void onConnected(String address) {
@@ -94,7 +139,9 @@ public abstract class AbsBleDeviceHelper {
                 onGattCommandParsing(data);
             }
         };
+    }
 
+    private void initBLEScanCallBack() {
         mOnBLEScanCallBack = new SnbBluetoothManager.OnBLEScanCallBack() {
             @Override
             public void onScanResult(ScanResult result) {
@@ -123,35 +170,28 @@ public abstract class AbsBleDeviceHelper {
                 }
             }
         };
+    }
 
-        mBluetoothManager = SnbBluetoothManager.singleton();
-
-        mServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                if (service instanceof IServiceBinder) {
-                    mBinder = (IServiceBinder) service;
-                    SnbLog.se(LOG_TAG, getLogStr("服务连接：" + name));
-                } else {
-                    SnbLog.se(LOG_TAG, getLogStr("服务连接-但是不是IServiceBinder对象" + name));
-                }
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                SnbLog.se(LOG_TAG, getLogStr("服务断开" + name));
-                //断开服务的时候需要将连接断开并且置空
-                if (mBinder != null) {
-                    disConnectionDevice();
-                    mBinder = null;
-                }
-            }
-        };
-        mBleReceiver = initBleReceiver();
+    /**
+     * 子类如果需要自己实现binder 的需求的话，这里可以拿到
+     */
+    protected void onBleServiceConnected(ComponentName name, IBinder service) {
 
     }
 
-    // <editor-fold defaultstate="collapsed" desc="蓝牙基本相关-扫描回调等">
+    protected void onBleServiceDisconnected(ComponentName name) {
+
+    }
+
+    /**
+     * 初始化蓝牙广播对象
+     * 也是留给子类扩展广播用的
+     */
+    protected BleReceiver initBleReceiver() {
+        return new BleReceiver(this);
+    }
+
+    // </editor-fold>
 
     /**
      * 蓝牙一些判断和一些开启关闭等操作都由他来完成
@@ -160,10 +200,22 @@ public abstract class AbsBleDeviceHelper {
         return mBluetoothManager;
     }
 
+    public void startScan(){
+        if(isDeviceSupport()){
+            getBluetoothManager().startScanLE();
+        }else{
+            sendError(ErrorInfo.BLUE_TOOTH_UN_SUPPORT);
+        }
+    }
+
+    public void stopScan(){
+        getBluetoothManager().stopScanLE();
+    }
+
     /**
      * 获得 设备的规则对象
      */
-    protected IBleDeviceRuler getDeviceRuler() {
+    private IBleDeviceRuler getDeviceRuler() {
         if (mDeviceRuler == null) {
             mDeviceRuler = initDeviceRuler();
         }
@@ -172,39 +224,34 @@ public abstract class AbsBleDeviceHelper {
 
     /**
      * 初始化设备的加载规则
-     *
-     * @return
      */
     protected abstract IBleDeviceRuler initDeviceRuler();
 
-    // </editor-fold>
+    private boolean isDeviceSupport() {
+        return getBluetoothManager().isSupport() && getBluetoothManager().isSupportLE();
+    }
 
     // <editor-fold defaultstate="collapsed" desc="蓝牙服务相关">
 
-    /**
-     * 初始化蓝牙的广播对象
-     * 也是为了留给子类去实现其他的需求
-     */
-    protected BleReceiver initBleReceiver() {
-        return new BleReceiver(this);
-    }
-
-    protected final boolean isCurrentConnecting(String address) {
+    public final boolean isCurrentConnecting(String address) {
         if (mTempAddress != null) {
             return mTempAddress.equals(address);
         }
         return false;
     }
 
+    /**
+     * 解析回调的值
+     * @param datas
+     */
     protected abstract void onGattCommandParsing(byte[] datas);
 
     //绑定服务
-    public void bindService() {
+    protected void bindService() {
         SnbLog.si(LOG_TAG, getLogStr("去绑定服务"));
         Context context = mActivityWeakReference.get();
         if (context != null) {
-            Intent intent = new Intent(context, BluetoothService.class);
-//            intent.putExtra(BluetoothService.BUNDKE_KEY_DEVICE_ADDRESS,address);
+            Intent intent = new Intent(context, getBleService());
             if (mBinder == null) {
                 context.startService(intent);
             }
@@ -214,8 +261,12 @@ public abstract class AbsBleDeviceHelper {
         }
     }
 
+    protected Class<? extends Service> getBleService() {
+        return BaseBleService.class;
+    }
 
-    public void unBindService() {
+    //解绑服务
+    protected void unBindService() {
         SnbLog.si(LOG_TAG, getLogStr("去解绑服务"));
         if (mBinder != null && mActivityWeakReference.get() != null) {
             mActivityWeakReference.get().unbindService(mServiceConnection);
@@ -228,10 +279,13 @@ public abstract class AbsBleDeviceHelper {
      * 当断开成功的时候
      */
     private String mCurrentAddress;
-    // 临时地址改变的地方
-    // 1.连接的时候
-    // 2.断开连接的时候
-    // 3.连接失败的时候
+
+    /**
+     * 临时地址改变的地方
+     * 1.连接的时候
+     * 2.断开连接的时候
+     * 3.连接失败的时候
+     */
     private String mTempAddress;
 
     /**
@@ -311,8 +365,6 @@ public abstract class AbsBleDeviceHelper {
 
     // </editor-fold>
 
-    // <editor-fold defaultstate="collapsed" desc="其他生命周期操作">
-
     /**
      * 创建初始化对象，只需要执行一次就可以了
      */
@@ -332,22 +384,13 @@ public abstract class AbsBleDeviceHelper {
     /**
      * 当不用的时候需要调用该方法进行销毁
      */
-    public void onDestory() {
+    public void onDestroy() {
         SnbLog.si(LOG_TAG, getLogStr("调用销毁"));
         unBindService();
         mBluetoothManager.unregisterOnBLEScanCallBack(mOnBLEScanCallBack);
         mActivityWeakReference.get().unregisterReceiver(mBleReceiver);
 
     }
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="其他公共方法">
-    private boolean isDeviceSupport() {
-        return getBluetoothManager().isSupport() && getBluetoothManager().isSupportLE();
-    }
-
-    // </editor-fold>
-
 
     // <editor-fold defaultstate="collapsed" desc="回调对象">
 
@@ -405,5 +448,4 @@ public abstract class AbsBleDeviceHelper {
     private String getLogStr(String msg) {
         return "蓝牙-服务:" + msg;
     }
-
 }
