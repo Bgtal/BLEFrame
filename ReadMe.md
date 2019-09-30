@@ -11,7 +11,7 @@ allprojects {
 }
 ```
 
-> implementation 'com.github.Bgtal:BLEFrame:1.0.1'
+> implementation 'com.github.Bgtal:BLEFrame:1.0.2'
 
 ## 项目依赖
 * 使用的时候需要在自己的项目中引用下面的包，不然会报错
@@ -166,7 +166,7 @@ Helper 的实现比较简单，具体的可以查看 demo 来
 2. 针对一个类型的蓝牙设备有对应的配置对象(IBleDeviceRuler)
 3. 一个 helper 只管理一种类型的设备
 4. 考虑到目前的业务不存在同时连接多个设备的情况，所以一个 helper 只能同时连接一个设备
-1. 
+1.
 5. heper 内部的回调(HelperListenerProxy)只对 Service 通信的进行反应,要想回调到前端，需要用户自己去设置监听(可以看demo)
 
 ###
